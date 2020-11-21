@@ -1,2 +1,2 @@
 # tracker
-mortality tracker platform
+mortality tracker platform, live at https://episphere.github.io/tracker
