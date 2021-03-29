@@ -160,7 +160,6 @@ export class ScatterPlot {
 
     var rows = state.dataset({[this.tField]: state.tValue}).get()
     var rows = rows.filter(row => isNumber(row[this.xField]) && isNumber(row[this.yField]))
-    console.log(rows)
 
     const scaleContains = (scale, d) => d >= scale.domain()[0] && d <= scale.domain()[1]
     

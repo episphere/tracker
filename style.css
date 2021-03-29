@@ -1,0 +1,23 @@
+.ts-dot {
+  font-size: .7em;
+}
+
+.ts-labels {
+  font-size: .7em;
+}
+
+.scatter-labels {
+  font-size: .7em;
+}
+
+.slider {
+  display: inline-block;
+  margin-left: 10px;
+  /* margin-bottom: 10px; */
+}
+
+.slider-label {
+  font-size: 9pt;
+  vertical-align: top
+}
+

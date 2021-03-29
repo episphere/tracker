@@ -220,6 +220,7 @@ function createSlider(id, title, values, defaultValue, oninput, labelFormat = d 
 
   const titleLabel = document.createElement("label")
   titleLabel.setAttribute("for", id)
+  titleLabel.className = "slider-label"
   titleLabel.innerHTML = title
   
   div.className = "slider"
