@@ -137,6 +137,9 @@ export class Scatter {
     this.inPoints = []
     this.outPoints = []
 
+    this.selectedRows = this.nowData
+      .filter(d => this.state.selected.has(d._s) || this.state.focus == d._s)
+
     for (const row of this.nowData) {
       if (scaleContains(this.scaleX, row[this.xField]) && 
           scaleContains(this.scaleY, row[this.yField])) {
@@ -375,9 +378,9 @@ export class Scatter {
 
   setYField(field) {
     this.yField = field
-    this.margin.left = this.#calculateLeftMargin()
     this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-        && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
+      && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
+    this.margin.left = this.#calculateLeftMargin()
     this.updateYAxis()
     this.updatePoints()
   }

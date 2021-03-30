@@ -28,7 +28,8 @@ export class Spider {
     Object.assign(this, opts)
     
     this.id = this.element.id
-    this.shortFields = this.nFields.map(field => field.length < this.maxLabelLength ? field : field.slice(0, this.maxLabelLength) + "...")
+    this.shortFields = this.nFields.map(field => 
+      field.length < this.maxLabelLength ? field : field.slice(0, this.maxLabelLength) + "...")
     this.tValues = [...d3.group(data, d => d._t).keys()]
     if (this.tValue == null) {
       this.tValue = this.tValues[0]
@@ -80,7 +81,16 @@ export class Spider {
     
     this.nodes.polygons = this.nodes.base.append("g")
       .attr("id", `${this.id}-polygons`)
-      .attr("transform",translate)
+      .attr("transform", translate)
+    this.scales = []
+    this.directions = []
+    for (const [i, field] of this.nFields.entries()) {
+      this.scales.push(d3.scaleLinear()
+        .domain(d3.extent(this.data, d => d[field]))
+        .range([0, this.axisSize[0]/2]))
+      this.directions.push(this.getRadialPoint(2 * Math.PI * i/this.nFields.length, 1))
+    }
+
     
     this.updatePolygons()
     
@@ -88,46 +98,126 @@ export class Spider {
   }
 
   updatePolygons() {
-    this.scales = []
-    for (const field of this.nFields) {
-      this.scales.push(d3.scaleLinear()
-        .domain(d3.extent(this.data, d => d[field]))
-        .range([0, this.axisSize[0]/2]))
-    }
 
     const sNowData = d3.group(this.nowData, d => d._s)
-
-    this.nodes.polygons.selectAll("*").remove()
-    for (const sData of sNowData.values()) {
-      const values = this.nFields.map(field => sData[0][field])
-      const rPolygon = this.nodes.polygons.append("g")
-        .attr("id", `${this.id}-polygon-${sData[0]._s}`)
-        .attr("class", "polygon")
-        
-        .datum(sData[0])
-      rPolygon.call(this.spiderPolygon(this.scales, values))
+    const polygonData = []
+    for (const rows of sNowData.values()) {
+      const row = rows[0]
+      const points = []
+      for (const [i, field] of this.nFields.entries()) {
+        const l = this.scales[i](row[field])
+        const direction = this.directions[i]
+        points.push(direction.map(v => v*l))
+      }
+      points.push(points[0])
+      polygonData.push({row: row, p: points})
     }
+
+    const line = d3.line()
+      .defined(d => !isNaN(d[0]) && !isNaN(d[1]))
+      .x(d => d[0])
+      .y(d => d[1])
+
+    // this.nodes.polygons.selectAll("path")
+    //   .data(polygonData)
+    //   .join("path")
+    //     .attr("id", d => `${this.id}-polygon-${d.row._s}`)
+    //     .attr("d", d =>line(d.p))
+    //     .attr("fill", "none")
+    //     .attr("stroke", (d, i) => this.interactiveColor(d.row, i))
+    //     .attr("stroke-width", 1.5)
+    //     .each((d, i, s) => {
+    //       const selection = this.nodes.polygons.select(`#${this.id}-polygon-${d.row._s}`)
+    //       selection.selectAll("circle")
+    //         .data(d.p.filter(d => !isNaN(d[0]) && !isNaN(d[1])))
+    //         .join("circle")
+    //           .attr("cx", d => {console.log(d); return d[0]})
+    //           .attr("cy", d => d[1])
+    //           .attr("r", 3)  
+    //           .attr("fill", "black")
+    //     })
+
+    this.nodes.polygons.selectAll("g")
+      .data(polygonData)
+      .join("g")
+        .attr("id", d => `${this.id}-polygon-${d.row._s}`)
+        .each((d, i, s) => {
+          const selection = this.nodes.polygons.select(`#${this.id}-polygon-${d.row._s}`)
+          // selection.selectAll("circle")
+          //   .data(d.p.filter(d => !isNaN(d[0]) && !isNaN(d[1])))
+          //   .join("circle")
+          //     .attr("cx", d => d[0])
+          //     .attr("cy", d => d[1])
+          //     .attr("r", (_, i) => this.interactiveColor(d.row, i))
+          //     .attr("fill", "black")
+
+          const lonePoints = []
+          for (var i = 0; i < d.p.length; i++) {
+            const iL = i == 0 ? d.p.length -1 : i-1
+            const iR = (i+1) % d.p.length
+            
+            if (!isNaN(d.p[i][0]) && !isNaN(d.p[i][1]) 
+                && (isNaN(d.p[iL][0]) || isNaN(d.p[iL][1])) 
+                && (isNaN(d.p[iR][0]) || isNaN(d.p[iR][1]))) {
+              lonePoints.push({row: d.row, p: d.p[i]})
+            }
+          }
+
+          selection.selectAll("circle")
+            .attr("class", "polygon")
+            .data(lonePoints)
+            .join("circle")
+              .attr("cx", d => d.p[0])
+              .attr("cy", d => d.p[1])
+              .attr("r", 2)
+              .attr("fill", (d, i) => this.interactiveColor(d.row, i))
+              //.attr("fill", "black")
+
+          selection.selectAll("path")
+            .attr("class", "polygon")
+            .data([d])
+            .join("path")
+              .attr("fill", "none")
+              .attr("stroke", (d, i) => this.interactiveColor(d.row, i))
+              .attr("stroke-width", 1.5)
+              .attr("d", d =>line(d.p))
+        })
+
+    this.nodes.polygons
+
+
+    // this.nodes.polygons.selectAll("*").remove()
+    // for (const sData of sNowData.values()) {
+    //   const values = this.nFields.map(field => sData[0][field])
+    //   const rPolygon = this.nodes.polygons.append("g")
+    //     .attr("id", `${this.id}-polygon-${sData[0]._s}`)
+    //     .attr("class", "polygon")
+        
+    //     .datum(sData[0])
+      //rPolygon.call(this.spiderPolygon(this.scales, values))
+    //}
   }
 
   updateInteraction() {
     const state = this.state
 
-
-    const interactiveColor = this.interactiveColor
-    const plot = this
-    this.nodes.polygons.selectAll(".polygon")
-      .each(function(d) {
-        const selection =  d3.select(this)
-        selection.selectAll("path")
-           .attr("stroke", (_, i) => interactiveColor(d, i, plot))
-        selection.selectAll("circle")
-          .attr("fill", (_, i) => interactiveColor(d, i, plot))
-    })
+    this.nodes.polygons.selectAll("path")
+      .attr("stroke", (d, i) => this.interactiveColor(d.row, i))
+    this.nodes.polygons.selectAll("circle")
+      .attr("fill", (d, i) => this.interactiveColor(d.row, i))
+    // this.nodes.polygons.selectAll(".polygon")
+    //   .each(function(d) {
+    //     const selection =  d3.select(this)
+    //     selection.selectAll("path")
+    //        .attr("stroke", (_, i) => interactiveColor(d, i, plot))
+    //     selection.selectAll("circle")
+    //       .attr("fill", (_, i) => interactiveColor(d, i, plot))
+    // })
   }
 
   drawSort() {
     this.selectedRows = this.nowData
-    .filter(d => this.state.selected.has(d._s) || this.state.focus == d._s)
+      .filter(d => this.state.selected.has(d._s) || this.state.focus == d._s)
     for (const row of this.selectedRows) {
       this.nodes.polygons.select(`#${this.id}-polygon-${row._s}`).raise()
     }
@@ -135,10 +225,10 @@ export class Spider {
 
 
   interactiveColor(d, i, plot) {
-    if (d._s == plot.state.focus ||
-      plot.state.selected.has(d._s) ||
-      plot.state.selected.size == 0 && plot.state.focus == null) {
-        return plot.coloring.f(d, i)
+    if (d._s == this.state.focus ||
+      this.state.selected.has(d._s) ||
+      this.state.selected.size == 0 && this.state.focus == null) {
+        return this.coloring.f(d, i)
     } else {
       return "rgb(240, 240, 240)"
     }

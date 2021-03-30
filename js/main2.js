@@ -5,8 +5,8 @@ import { Scatter } from "./classes/rewrite/ScatterPlot.js"
 import { Spider } from "./classes/SpiderPlot.js"
 
 
-//const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
-const URL = "./data/test_data.json"
+const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
+//const URL = "./data/test_data.json"
 
 const populationDataPromise = d3.json("./data/population_2019.json")
 const mainDataPromise = d3.json(URL)

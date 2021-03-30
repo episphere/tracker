@@ -96,23 +96,6 @@ export class TimeSeries {
         .attr("d", line)
         .attr("stroke", (d, i) => this.interactiveColor(d, i))
     }
-
-    // console.log( d3.group(this.seriesData, d => d._s))
-    // const tData = d3.group(this.data, d => d._s).get("Utah")
-    // console.log(tData, line(tData))
-    // this.nodes.paths.append("path")
-    //   .datum(tData.filter(line.defined()))
-    //   .style("stroke-dasharray", ("3, 3"))
-    //   .attr("stroke", (d, i) => this.interactiveColor(d, i))
-    //   .attr("stroke-width", 0.5)
-    //   .attr("d", line)
-
-    // this.nodes.paths.append("path")
-    //   .datum(tData)
-    //   .attr("stroke", "green")
-    //   .attr("stroke", (d, i) => this.interactiveColor(d, i))
-    //   .attr("d", line)
-      
   }
 
   updateInteraction() {
@@ -275,7 +258,6 @@ export class TimeSeries {
     const p = [this.scaleX(this.tValues[i]), this.scaleY(s[i][this.yField])]
 
     if (Math.abs(p[1] - pointer[1]) < this.hoverProximity) {
-      //console.log(s[i])
       this.state.focus = s[i]._s
       this.nodes.dot.select("text").text(s[i][this.sField]);
       this.nodes.dot.attr("transform", `translate(${p[0]},${p[1]})`)
