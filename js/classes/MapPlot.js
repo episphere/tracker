@@ -1,11 +1,13 @@
 export class MapPlot {
 
-  constructor(element, geoData, state, opts = {}) {
+  constructor(element, geoData, data, state, tField, yField, sField, opts = {}) {
 
     opts = {
       ... {
+        tValue: null,
         size: [360, 220],
-        coloring: null
+        coloring: null,
+        tParse: v => new Date(v),
       },
       ...opts 
     }
@@ -15,14 +17,38 @@ export class MapPlot {
     }
 
     this.element = element
+    this.data = data 
     this.geoData = geoData.map(row => {
       row._s = row.name.replace(/[\W_]+/g,"_")
       return row
     })
+    this.tField = tField
+    this.yField = yField
+    this.sField = sField
     this.state = state
     Object.assign(this, opts)
 
+    // Set special fields: _t (parsed time), _s (formatted stratify field)
+    this.data = data.map(row => {
+      row._t = this.tParse(row[this.tField])
+      row._s = row[this.sField].replace(/[\W_]+/g,"_")
+      return row
+    })
+
     this.id = element.id
+    this.tValues = [...d3.group(data, d => d._t).keys()]
+    if (this.tValue == null) {
+      this.tValue = this.tValues[0]
+    }
+    this.tValues = [...d3.group(data, d => d._t).keys()]
+    if (this.tValue == null) {
+      this.tValue = this.tValues[0]
+    }
+    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
+        && !isNaN(d[this.yField]))
+    this.nowDataByS = d3.group(this.nowData, d => d._s)
+    this.selectedRows = this.nowData
+        .filter(d => state.selected.has(d._s) || state.focus == d._s)
 
     this.nodes = {}
     this.coloringMap = new Map()
@@ -33,7 +59,7 @@ export class MapPlot {
       this.areaCenterMap.set(area._s, d3.polygonCentroid(points))
     }
 
-    this.setColoring(this.coloring == null ? this.getDefaultColoring() : this.coloring)
+    this.setColoring(this.coloring == null ? this.getScaleColoring() : this.coloring)
 
     this.createBase()
 
@@ -115,6 +141,24 @@ export class MapPlot {
     }
   }
 
+  setTValue(tValue) {
+    this.tValue = tValue
+    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
+      && !isNaN(d[this.yField]))
+    this.nowDataByS = d3.group(this.nowData, d => d._s)
+    this.updateInteraction()
+  }
+
+
+  setYField(yField) {
+    this.yField = yField
+    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
+      && !isNaN(d[this.yField]))
+    this.nowDataByS = d3.group(this.nowData, d => d._s)
+    this.setColoring(this.getScaleColoring())
+    this.updateInteraction()
+  }
+
   stateChange(property, value) {
     if (property == "focus") {
       this.updateInteraction()
@@ -125,7 +169,17 @@ export class MapPlot {
 
 
   getScaleColoring() {
-    
+    const colorScale = d3.scaleSequential()
+      .domain(d3.extent(this.data, row => row[this.yField]))
+      .interpolator(d3.interpolateViridis) 
+    return {id: "scale", name: "Y Scale", f: (d, i) => {
+      const dataRow = this.nowDataByS.get(d._s)
+      if (dataRow) {
+        return colorScale(dataRow[0][this.yField])
+      } else {
+        return "grey"
+      }
+    }}
   }
 
   getDefaultColoring() {
@@ -140,6 +194,6 @@ export class MapPlot {
       sColorMap.set(sValue, colorScale(i))
     }
 
-    return {id: "default", name: "Default", f: function(d, i) {return sColorMap.get(d._s)}}
+    return {id: "default", name: "Default", f: function(d, i) { return sColorMap.get(d._s)}}
   }
 }

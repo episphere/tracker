@@ -46,10 +46,13 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   const state = new DynamicState()
   state.defineProperty("selected", new Set())
   state.defineProperty("focus", null)
+  state.defineProperty("yField", "alzheimer_disease_g30")
 
   const coloring = getDefaultColoring(data, "jurisdiction_of_occurrence")
   window.map = new MapPlot(
-    document.getElementById("map"), geoData, state, {coloring: coloring}
+    document.getElementById("map"),
+    geoData, data, state, "week_ending_date", "alzheimer_disease_g30", "jurisdiction_of_occurrence", 
+    //{coloring: coloring}
   )
   state.addListener((p, v) => map.stateChange(p, v))
 
@@ -70,7 +73,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   window.spider = new Spider(
     document.getElementById("spider"), 
     data, state, "week_ending_date", "jurisdiction_of_occurrence",
-    [...numericFields.values()], {size: [360, 310]}
+    [...numericFields.values()], {size: [360, 300]}
   )
   state.addListener((p, v) => spider.stateChange(p, v))
 
@@ -83,6 +86,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
     function() {
       timeSeries.setYField(this.value)
       scatter.setYField(this.value)
+      map.setYField(this.value)
     }
   )
 
@@ -95,7 +99,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
       scatter.setTValue(scatter.tValues[v])
       timeSeries.setTValue(timeSeries.tValues[v])
       spider.setTValue(timeSeries.tValues[v])
-      //spider.setTValue(timeSeries.tValues[v])
+      map.setTValue(map.tValues[v])
     },
     v => v.toISOString().slice(0, 10)
   )

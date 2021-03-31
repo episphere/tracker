@@ -200,12 +200,12 @@ function createSlider(id, title, values, defaultValue, oninput, labelFormat = d 
   slider.min = 0
   slider.max = values.length-1
   slider.defaultValue = values.indexOf(defaultValue)
-  slider.style = "width: 260px"
+  slider.style = "width: 585px; vertical-align: middle"
   
   const labelElement = document.createElement("label")
   labelElement.setAttribute("for", id)
   labelElement.innerHTML = labelFormat(values[slider.value])
-  labelElement.setAttribute("style", "margin-left: 5px")
+  labelElement.setAttribute("style", "margin-left: 5px; vertical-align: middle")
   labelElement.className = "slider-label"
   
   // slider.oninput = function(e) {
@@ -222,6 +222,7 @@ function createSlider(id, title, values, defaultValue, oninput, labelFormat = d 
   titleLabel.setAttribute("for", id)
   titleLabel.className = "slider-label"
   titleLabel.innerHTML = title
+  titleLabel.style = "vertical-align: middle"
   
   div.className = "slider"
   div.appendChild(titleLabel)

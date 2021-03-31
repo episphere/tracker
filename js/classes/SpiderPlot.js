@@ -30,6 +30,7 @@ export class Spider {
     this.id = this.element.id
     this.shortFields = this.nFields.map(field => 
       field.length < this.maxLabelLength ? field : field.slice(0, this.maxLabelLength) + "...")
+    this.fieldPairs = this.nFields.map((d, i) => [d, this.shortFields[i]])
     this.tValues = [...d3.group(data, d => d._t).keys()]
     if (this.tValue == null) {
       this.tValue = this.tValues[0]
@@ -75,7 +76,7 @@ export class Spider {
     this.nodes.rAxis
       .attr("transform", translate)
       .call(this.radialAxis(this.scales)
-        .fields(this.shortFields)
+        .fields(this.fieldPairs)
         .ticks(1)
       )
     
@@ -270,8 +271,8 @@ export class Spider {
   
   
   calculateMargin() {
-    this.nodes.rAxis.call(this.radialAxis(d3.scaleLinear().domain([0, 1]).range([0, this.size[1]/2]))
-      .fields(this.shortFields)
+    this.nodes.rAxis.call(this.radialAxis(d3.scaleLinear().domain([0, 1]).range([0, this.size[0]/2]))
+      .fields(this.fieldPairs)
       .ticks(1)
     )
     const box = this.nodes.rAxis.node().getBBox()
@@ -279,6 +280,7 @@ export class Spider {
     const right = box.width - this.size[0] - left
     const top = Math.abs(box.y) - this.size[1]/2
     const bottom = box.height - this.size[1] - top
+
     return {left: left, right: right, top: top, bottom: bottom}
   }
   
@@ -367,26 +369,51 @@ export class Spider {
           .attr("fill", "none")
           .attr("stroke", "grey")
       
-      const textPoints = rPoints[ticks-1].map((rPoint, i) => {
+      const textPoints = rPoints[ticks-1].slice(0, fields.length).map((rPoint, i) => {
         const alignment = angleToTextAlign(rPoint[0])
         const lPoint = this.getRadialPoint(rPoint[0], rPoint[1] + 5)
-        const label = fields[i]
-        return {rPoint: rPoint, lPoint: lPoint, label: label, alignment: alignment}
+        const label = fields[i][1]
+        return {
+          rPoint: rPoint, lPoint: lPoint, 
+          label: label, fullLabel:  fields[i][0], 
+          alignment: alignment, selectedField: null
+        }
       })
       
       const labels = selection.append("g")
         .style("font-size", "11px")
         .attr("font-family", "monospace")
+      var selectionI = 0
+      var selectedIs = [0, 0]
       
+      const fieldColor = d => d.selectedField == "y" ? "blue" : (d.selectedField == "x" ? "red" : "black")
       labels.append("g")
         .selectAll("text")
         .data(textPoints)
         .join("text")
           .attr("x", d => d.lPoint[0])
           .attr("y", d => d.lPoint[1])
+          .attr("fill", fieldColor)
           .style("dominant-baseline", d => d.alignment[1])
           .style("text-anchor", d => d.alignment[0])
+          // .on("mouseover", function ()  {
+          //   d3.select(this).style("cursor", "pointer"); 
+          //   d3.select(this).style("fill", "grey")
+          // })
+          // .on("mouseout", function ()  {
+          //   d3.select(this).style("cursor", "default"); 
+          //   d3.select(this).style("fill", fieldColor)
+          // })
+          // .on("click", (_, d) => {
+          //   textPoints[selectedIs[selectionI]].selected = null
+          //   this.state.yField = d.fullLabel
+          //   d.selectedField = ["x", "y"][selectionI]
+          //   selectionI = (selectionI + 1) % 2
+            
+          // })
           .text(d => d.label)
+          .append("svg:title")
+            .text(function(d, i) { return d.fullLabel});
       
       return selection
     }
@@ -394,7 +421,7 @@ export class Spider {
     axis.fields = function(value) {
       if (!arguments.length) return fields
       if (scales.length == 0) {
-        value.forEach(field => scales.push(scale))
+        value.forEach(_ => scales.push(scale))
       }
       fields = value
       return axis
