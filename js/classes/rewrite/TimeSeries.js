@@ -328,6 +328,10 @@ export class TimeSeries {
     this.updateNowLine()
   }
 
+  setLabelsVisible(visible) {
+    this.nodes.labels.attr("visibility", visible ? "visible" : "hidden")
+  }
+
 
   stateChange(property, value) {
     if (property == "focus" || property == "tValue") {

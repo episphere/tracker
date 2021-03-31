@@ -5,6 +5,7 @@ export class MapPlot {
     opts = {
       ... {
         tValue: null,
+        labelsVisible: true,
         size: [360, 220],
         coloring: null,
         tParse: v => new Date(v),
@@ -112,8 +113,10 @@ export class MapPlot {
       .attr("fill", (d, i) => this.interactiveColor(d, i))
 
 
+    const textAreas = this.labelsVisible ?
+      this.selectedAreas : this.geoData.filter(d => this.state.focus == d._s)
     this.nodes.labels.selectAll("text")
-      .data(this.selectedAreas)
+      .data(textAreas)
       .join("text")
         .attr("x", d => this.areaCenterMap.get(d._s)[0]*this.scaleFactor)
         .attr("y", d => this.areaCenterMap.get(d._s)[1]*this.scaleFactor)
@@ -158,6 +161,12 @@ export class MapPlot {
     this.setColoring(this.getScaleColoring())
     this.updateInteraction()
   }
+
+  setLabelsVisible(visible) {
+    this.labelsVisible = visible
+    this.updateInteraction()
+  }
+
 
   stateChange(property, value) {
     if (property == "focus") {

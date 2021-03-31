@@ -8,6 +8,7 @@ export class Scatter {
         tValue: null,
         bubbleField: null,
         viewTraces: true,
+        labelsVisible: true,
         tTickFormat: v => v,
         yTickFormat: v => v,
         tParse: v => new Date(v),
@@ -241,8 +242,10 @@ export class Scatter {
       return cValue + offset
     }
 
+    const textRows = this.labelsVisible ?
+      this.selectedRows : this.nowData.filter(d => this.state.focus == d._s)
     this.nodes.labels.selectAll("text")
-      .data(this.selectedRows)
+      .data(textRows)
       .join("text")
         .attr("x", d => positionText(d, this.xField, this.scaleX, 3, [-17, 5]))
         .attr("y", d => positionText(d, this.yField, this.scaleY, 3, [-20, 5]))
@@ -388,6 +391,12 @@ export class Scatter {
     this.margin.left = this.#calculateLeftMargin()
     this.updateYAxis()
     this.updatePoints()
+  }
+
+  setLabelsVisible(visible) {
+    //this.nodes.labels.attr("visibility", visible ? "visible" : "hidden")
+    this.labelsVisible = visible
+    this.updateLabels()
   }
 
 

@@ -147,12 +147,13 @@ function createControls(id, scatter, state) {
   div.appendChild(tSlider)
 }
 
-function createCheckbox(label, oninput) {
+function createCheckbox(label, oninput, checked=false) {
   const checkDiv = document.createElement("div")
   checkDiv.className = "check"
   const check = document.createElement("input")
   check.type = "checkbox"
   check.oninput = oninput
+  check.checked = checked
 
   const checkLabel = document.createElement("label")
   //checkLabel.setAttribute("for", `${id}-bubble`)

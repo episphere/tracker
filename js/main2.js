@@ -18,6 +18,8 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   const geoData = datas[1]
   const rawData = datas[2]
 
+  // TODO: Hide labels
+
   const populationMap = d3.group(popData, d => d.NAME)
 
   const numericFields = new Map([
@@ -89,10 +91,16 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
       map.setYField(this.value)
     }
   )
+  const labelCheck = createCheckbox("Labels", function(e) {
+    scatter.setLabelsVisible(this.checked)
+    map.setLabelsVisible(this.checked)
+    timeSeries.setLabelsVisible(this.checked)
+  }, true)
 
   const controlsTop = document.getElementById("controls-top")
   controlsTop.appendChild(xSelect)
   controlsTop.appendChild(ySelect)
+  controlsTop.appendChild(labelCheck)
 
   const tSlider = createSlider(`date-slider`, "Date:", scatter.tValues, scatter.tValue,
     function(v) {
