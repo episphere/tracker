@@ -3,17 +3,20 @@ import { TimeSeries } from "./classes/rewrite/TimeSeries.js"
 import { Format } from "./classes/Format.js"
 import { Scatter } from "./classes/rewrite/ScatterPlot.js"
 import { Spider } from "./classes/SpiderPlot.js"
+import { MapPlot } from "./classes/MapPlot.js"
 
 
 const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
 //const URL = "./data/test_data.json"
 
 const populationDataPromise = d3.json("./data/population_2019.json")
+const geoDataPromise = d3.json("./data/us_geo.json")
 const mainDataPromise = d3.json(URL)
 
-Promise.all([populationDataPromise, mainDataPromise]).then(datas => {
+Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas => {
   const popData = datas[0]
-  const rawData = datas[1]
+  const geoData = datas[1]
+  const rawData = datas[2]
 
   const populationMap = d3.group(popData, d => d.NAME)
 
@@ -34,7 +37,6 @@ Promise.all([populationDataPromise, mainDataPromise]).then(datas => {
   var data = Format.format(rawData, fieldConfig)
   data = data.filter(d => d.jurisdiction_of_occurrence != "United States" && d.jurisdiction_of_occurrence != "New York City")
   data.forEach(row => {
-    //console.log(row["jurisdiction_of_occurrence"], populationMap.get(row["jurisdiction_of_occurrence"]))//[0].POP)
     const pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
     for (const field of numericFields.values()) {
       row[field] = row[field] / pop
@@ -45,24 +47,30 @@ Promise.all([populationDataPromise, mainDataPromise]).then(datas => {
   state.defineProperty("selected", new Set())
   state.defineProperty("focus", null)
 
+  const coloring = getDefaultColoring(data, "jurisdiction_of_occurrence")
+  window.map = new MapPlot(
+    document.getElementById("map"), geoData, state, {coloring: coloring}
+  )
+  state.addListener((p, v) => map.stateChange(p, v))
+
   window.timeSeries = new TimeSeries(
     document.getElementById("time-series"), 
     data, state, "week_ending_date", "alzheimer_disease_g30", "jurisdiction_of_occurrence",
-    {size: [720, 320], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true}
+    {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true}
   )
   state.addListener((p, v) => timeSeries.stateChange(p, v))
 
   window.scatter = new Scatter(
     document.getElementById("scatter"), 
     data, state, "week_ending_date", "all_cause", "alzheimer_disease_g30", 
-    "jurisdiction_of_occurrence"
+    "jurisdiction_of_occurrence", {size: [300, 300]}
   )
   state.addListener((p, v) => scatter.stateChange(p, v))
 
   window.spider = new Spider(
     document.getElementById("spider"), 
     data, state, "week_ending_date", "jurisdiction_of_occurrence",
-    [...numericFields.values()]
+    [...numericFields.values()], {size: [360, 310]}
   )
   state.addListener((p, v) => spider.stateChange(p, v))
 
@@ -95,4 +103,19 @@ Promise.all([populationDataPromise, mainDataPromise]).then(datas => {
   const controlsBottom = document.getElementById("controls-bottom")
   controlsBottom.appendChild(tSlider)
 })
+
+function getDefaultColoring(data, sField) {
+  const sColorMap = new Map()
+  const sValues = [...d3.group(data, d => d[sField]).keys()].map(d => d.replace(/[\W_]+/g,"_"))
+  
+  const colorScale = d3.scaleSequential()
+    .domain([0, sValues.length])
+    .interpolator(d3.interpolateRainbow) 
+
+  for (const [i, sValue] of sValues.entries()) {
+    sColorMap.set(sValue, colorScale(i))
+  }
+
+  return {id: "default", name: "Default", f: function(d, i) {return sColorMap.get(d._s)}}
+}
 

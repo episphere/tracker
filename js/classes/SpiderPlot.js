@@ -224,7 +224,7 @@ export class Spider {
   }
 
 
-  interactiveColor(d, i, plot) {
+  interactiveColor(d, i) {
     if (d._s == this.state.focus ||
       this.state.selected.has(d._s) ||
       this.state.selected.size == 0 && this.state.focus == null) {

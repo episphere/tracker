@@ -55,6 +55,7 @@ export class Scatter {
       .attr("id", `${this.id}-base`)
       .attr("width", this.size[0])
       .attr("height", this.size[1])
+      .on("click", (e, d) => this.blankClick(e, d))
     
     element.append(this.nodes.base.node())
 
@@ -334,6 +335,10 @@ export class Scatter {
       this.state.selected = this.state.selected.add(sValue)
     }
     e.stopPropagation()
+  }
+
+  blankClick(e, d) {
+    this.state.selected = new Set()
   }
 
 
