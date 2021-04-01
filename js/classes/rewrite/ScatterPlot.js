@@ -9,9 +9,13 @@ export class Scatter {
         bubbleField: null,
         viewTraces: true,
         labelsVisible: true,
+        maxLabelLength: 16,
+        unit: false,
         tTickFormat: v => v,
         yTickFormat: v => v,
         tParse: v => new Date(v),
+        xTransform: v => v,
+        yTransform: v => v,
         coloring: null,
         size: [360, 360], // TODO: Default to element size
       },
@@ -42,8 +46,7 @@ export class Scatter {
     if (this.tValue == null) {
       this.tValue = this.tValues[0]
     }
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-        && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.selectedRows = this.nowData
         .filter(d => state.selected.has(d._s) || state.focus == d._s)
     
@@ -100,12 +103,33 @@ export class Scatter {
       //.attr("fill", "black")
       .style("pointer-events", "none")
 
+    this.nodes.axisLabels = this.nodes.base.append("g")
+      .attr("id", `${this.id}-axisLabels`)
+      .style("pointer-events", "none")
+      .style("font-family", "sans-serif")
+      .style("font-weight", "bold")
+      .style("font-size", "11px")
+
+    this.nodes.xAxisLabel = this.nodes.axisLabels.append("text")
+      .attr("id", `${this.id}-x-axisLabel`)
+      .attr("dominant-baseline", "text-after-edge")
+      .attr("text-anchor", "end")
+      .attr("fill", "grey")
+      .attr("x", this.size[0] - this.margin.right)
+      .attr("y", this.size[1] - this.margin.bottom)
+    this.nodes.yAxisLabel = this.nodes.axisLabels.append("text")
+      .attr("id", `${this.id}-y-axisLabel`)
+      .attr("dominant-baseline", "text-before-edge")
+      .attr("fill", "grey")
+      .attr("x", this.margin.left + 5)
+      .attr("y", this.margin.top)
+
     this.nodes.traces = this.nodes.base.append("g")
       .attr("id", `${this.id}-traces`)
   }
 
   updateXAxis() {
-    const xValues = [...d3.group(this.data, d => d[this.xField]).keys()]
+    const xValues = [...d3.group(this.data, d => d._x).keys()]
 
     this.nodes.xAxis
       .attr("transform", `translate(0,${this.size[1] -  this.margin.bottom})`)
@@ -118,10 +142,15 @@ export class Scatter {
       .ticks(this.size[0] / 80)
       .tickSizeOuter(0)
     )
+
+    const shortLabel = this.xField.length > this.maxLabelLength ?
+      this.xField.slice(0, this.maxLabelLength) + "..." : this.xField
+    const lableWithUnit = this.unit ? shortLabel + ` (${this.unit})` : shortLabel
+    this.nodes.xAxisLabel.text(lableWithUnit)
   }
 
   updateYAxis() {
-    const yValues = [...d3.group(this.data, d => d[this.yField]).keys()]
+    const yValues = [...d3.group(this.data, d => d._y).keys()]
 
     this.nodes.yAxis
       .attr("transform", `translate(${this.margin.left},0)`)
@@ -131,6 +160,11 @@ export class Scatter {
       .range([this.size[1] - this.margin.bottom, this.margin.top])
 
     this.nodes.yAxis.call(d3.axisLeft(this.scaleY))
+
+    const shortLabel = this.yField.length > this.maxLabelLength ?
+      this.yField.slice(0, this.maxLabelLength) + "..." : this.yField
+    const lableWithUnit = this.unit ? shortLabel + ` (${this.unit})` : shortLabel
+    this.nodes.yAxisLabel.text(lableWithUnit)
   }
 
   updatePoints() {
@@ -143,8 +177,8 @@ export class Scatter {
       .filter(d => this.state.selected.has(d._s) || this.state.focus == d._s)
 
     for (const row of this.nowData) {
-      if (scaleContains(this.scaleX, row[this.xField]) && 
-          scaleContains(this.scaleY, row[this.yField])) {
+      if (scaleContains(this.scaleX, row._x) && 
+          scaleContains(this.scaleY, row._y)) {
             this.inPoints.push(row) 
       } else {
         this.outPoints.push(row) 
@@ -158,8 +192,8 @@ export class Scatter {
       .join("circle")
         .attr("class", "point")
         .attr("id", d => `${this.id}-point-${d._s}`)
-        .attr("cx", d => this.scaleX(d[this.xField]))
-        .attr("cy", d => this.scaleY(d[this.yField]))
+        .attr("cx", d => this.scaleX(d._x))
+        .attr("cy", d => this.scaleY(d._y))
         //.attr("r", d => this.bubbleField ? this.bubbleScale(d[this.bubbleField]) : 5)
         //.attr("fill", (d,i) => this.interactiveColor(d,i))
         .attr("r", 3)
@@ -199,10 +233,10 @@ export class Scatter {
     this.nodes.outPoints.selectAll(".point-part")
       .attr("transform", d => {
         const line = [
-          [this.scaleX(d[this.xField]), 
-            this.scaleY(d[this.yField])],
-          [clamp(this.scaleX(d[this.xField]), this.scaleX.range()), 
-            clamp(this.scaleY(d[this.yField]), this.scaleY.range())],
+          [this.scaleX(d._x), 
+            this.scaleY(d._y)],
+          [clamp(this.scaleX(d._x), this.scaleX.range()), 
+            clamp(this.scaleY(d._y), this.scaleY.range())],
         ]
         const angle = getAngle([line[1][0] - line[0][0], line[1][1] - line[0][1]])
         return `translate(${line[1][0]}, ${line[1][1]}) rotate(${angle+90}) translate(${-triSize/2}, ${0})`
@@ -268,7 +302,7 @@ export class Scatter {
       for (var i = tIndex; i >= Math.max(0, tIndex-4); i--) {
         const tData = d3.group(this.data, d => d._t).get(this.tValues[i])
         const row = d3.group(tData, d => d._s).get(selectedState)[0]
-        if (isNaN(row[this.xField]) || isNaN(row[this.yField])) {
+        if (isNaN(row._x) || isNaN(row._y)) {
           break
         } 
         stateRows.push(row)
@@ -279,7 +313,7 @@ export class Scatter {
         this.nodes.traces.append("path")
         .datum(stateRows)
         .attr("d", d => d3.line()(
-          d.map(row => [this.scaleX(row[this.xField]), this.scaleY(row[this.yField])])))
+          d.map(row => [this.scaleX(row._x), this.scaleY(row._y)])))
         .attr("stroke", (d, i) => this.interactiveColor(d[d.length-1], i))
         .attr("fill", "none")
 
@@ -288,12 +322,21 @@ export class Scatter {
         onionPoints.selectAll("circle")
           .data(stateRows.slice(1,5))
           .join("circle")
-            .attr("cx", d => this.scaleX(d[this.xField]))
-            .attr("cy", d => this.scaleY(d[this.yField]))
+            .attr("cx", d => this.scaleX(d._x))
+            .attr("cy", d => this.scaleY(d._y))
             .attr("fill", (d, i) => lightenRGB(this.interactiveColor(d, i), (1/5) + i/5))
             .attr("r", 3)
       }
     }
+  }
+
+  updateNowData() {
+    this.data.forEach(row => {
+      row._x = this.xTransform(row[this.xField], row)
+      row._y = this.yTransform(row[this.yField], row)
+    })
+    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
+      && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
   }
 
 
@@ -370,33 +413,33 @@ export class Scatter {
 
   setTValue(tValue) {
     this.tValue = tValue
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-      && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.updatePoints()
     this.updateInteraction()
   }
 
   setXField(field) {
     this.xField = field
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-        && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.updateXAxis()
     this.updatePoints()
   }
 
   setYField(field) {
     this.yField = field
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-      && !isNaN(d[this.xField]) && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.margin.left = this.#calculateLeftMargin()
     this.updateYAxis()
     this.updatePoints()
   }
 
   setLabelsVisible(visible) {
-    //this.nodes.labels.attr("visibility", visible ? "visible" : "hidden")
     this.labelsVisible = visible
     this.updateLabels()
+  }
+
+  setAxisLabelsVisible(visible) {
+    this.nodes.axisLabels.attr("visibility", visible ? "visible" : "hidden")
   }
 
 

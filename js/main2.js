@@ -39,9 +39,9 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   var data = Format.format(rawData, fieldConfig)
   data = data.filter(d => d.jurisdiction_of_occurrence != "United States" && d.jurisdiction_of_occurrence != "New York City")
   data.forEach(row => {
-    const pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
+    row.pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
     for (const field of numericFields.values()) {
-      row[field] = row[field] / pop
+      row[field] = row[field] * (100000 / row.pop)
     }
   })
 
@@ -54,6 +54,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   window.map = new MapPlot(
     document.getElementById("map"),
     geoData, data, state, "week_ending_date", "alzheimer_disease_g30", "jurisdiction_of_occurrence", 
+    //{yTransform: (v, row) => 100000 * v/row.pop}
     //{coloring: coloring}
   )
   state.addListener((p, v) => map.stateChange(p, v))
@@ -61,14 +62,17 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   window.timeSeries = new TimeSeries(
     document.getElementById("time-series"), 
     data, state, "week_ending_date", "alzheimer_disease_g30", "jurisdiction_of_occurrence",
-    {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true}
+    {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true, 
+    unit: "deaths per 100k"}
   )
   state.addListener((p, v) => timeSeries.stateChange(p, v))
 
   window.scatter = new Scatter(
     document.getElementById("scatter"), 
     data, state, "week_ending_date", "all_cause", "alzheimer_disease_g30", 
-    "jurisdiction_of_occurrence", {size: [300, 300]}
+    "jurisdiction_of_occurrence", {
+      size: [300, 300], unit: "deaths per 100k"
+    }
   )
   state.addListener((p, v) => scatter.stateChange(p, v))
 
@@ -96,11 +100,16 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
     map.setLabelsVisible(this.checked)
     timeSeries.setLabelsVisible(this.checked)
   }, true)
+  const axisLabels = createCheckbox("Axis Labels", function(e) {
+    scatter.setAxisLabelsVisible(this.checked)
+    timeSeries.setAxisLabelsVisible(this.checked)
+  }, true)
 
   const controlsTop = document.getElementById("controls-top")
   controlsTop.appendChild(xSelect)
   controlsTop.appendChild(ySelect)
   controlsTop.appendChild(labelCheck)
+  controlsTop.appendChild(axisLabels)
 
   const tSlider = createSlider(`date-slider`, "Date:", scatter.tValues, scatter.tValue,
     function(v) {

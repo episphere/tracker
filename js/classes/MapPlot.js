@@ -8,6 +8,7 @@ export class MapPlot {
         labelsVisible: true,
         size: [360, 220],
         coloring: null,
+        yTransform: v => v,
         tParse: v => new Date(v),
       },
       ...opts 
@@ -45,8 +46,7 @@ export class MapPlot {
     if (this.tValue == null) {
       this.tValue = this.tValues[0]
     }
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-        && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.nowDataByS = d3.group(this.nowData, d => d._s)
     this.selectedRows = this.nowData
         .filter(d => state.selected.has(d._s) || state.focus == d._s)
@@ -123,6 +123,14 @@ export class MapPlot {
         .text(d => d.name)
   }
 
+  updateNowData() {
+    this.data.forEach(row => {
+      row._y = this.yTransform(row[this.yField], row)
+    })
+    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
+      && !isNaN(d[this.yField]))
+  }
+
 
   interactiveColor(d, i) {
     if (d._s == this.state.focus ||
@@ -146,8 +154,7 @@ export class MapPlot {
 
   setTValue(tValue) {
     this.tValue = tValue
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-      && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.nowDataByS = d3.group(this.nowData, d => d._s)
     this.updateInteraction()
   }
@@ -155,8 +162,7 @@ export class MapPlot {
 
   setYField(yField) {
     this.yField = yField
-    this.nowData = this.data.filter(d => d._t.toString() == this.tValue.toString()
-      && !isNaN(d[this.yField]))
+    this.updateNowData()
     this.nowDataByS = d3.group(this.nowData, d => d._s)
     this.setColoring(this.getScaleColoring())
     this.updateInteraction()
@@ -179,12 +185,12 @@ export class MapPlot {
 
   getScaleColoring() {
     const colorScale = d3.scaleSequential()
-      .domain(d3.extent(this.data, row => row[this.yField]))
+      .domain(d3.extent(this.data, row => row._y))
       .interpolator(d3.interpolateViridis) 
     return {id: "scale", name: "Y Scale", f: (d, i) => {
       const dataRow = this.nowDataByS.get(d._s)
       if (dataRow) {
-        return colorScale(dataRow[0][this.yField])
+        return colorScale(dataRow[0]._y)
       } else {
         return "grey"
       }

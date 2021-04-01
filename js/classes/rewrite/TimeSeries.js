@@ -7,6 +7,8 @@ export class TimeSeries {
       ...{
         drawNowLine: false,
         hoverProximity: 20,
+        maxLabelLength: 16,
+        unit: null,
         tTickFormat: v => v,
         yTickFormat: v => v,
         tParse: v => new Date(v),
@@ -148,6 +150,12 @@ export class TimeSeries {
     this.nodes.yAxis.call(d3.axisLeft(this.scaleY)
       .tickFormat(this.yTickFormat)) 
 
+    const shortLabel = this.yField.length > this.maxLabelLength ?
+      this.yField.slice(0, this.maxLabelLength) + "..." : this.yField
+    const lableWithUnit = this.unit ? shortLabel + ` (${this.unit})` : shortLabel
+    this.nodes.yAxisLabel.text(lableWithUnit)
+      .attr("x", this.margin.left + 5)
+      .attr("y", this.margin.top)
   }
 
   updateXAxis() {
@@ -218,6 +226,16 @@ export class TimeSeries {
       .style("pointer-events", "none")
       .attr("text-anchor", "left")
       .attr("dominant-baseline", "middle")
+
+    this.nodes.axisLabels = this.nodes.base.append("g")
+      .attr("id", `${this.id}-axisLabels`)
+      .style("pointer-events", "none")
+      .style("font-family", "sans-serif")
+      .style("font-weight", "bold")
+      .style("font-size", "11px")
+      .attr("fill", "grey")
+
+    this.nodes.yAxisLabel = this.nodes.axisLabels.append("text")
 
     this.nodes.nowLine = this.nodes.base.append("line")
       .attr("stroke", "grey")
@@ -330,6 +348,10 @@ export class TimeSeries {
 
   setLabelsVisible(visible) {
     this.nodes.labels.attr("visibility", visible ? "visible" : "hidden")
+  }
+
+  setAxisLabelsVisible(visible) {
+    this.nodes.axisLabels.attr("visibility", visible ? "visible" : "hidden")
   }
 
 

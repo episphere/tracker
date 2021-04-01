@@ -9,6 +9,7 @@ export class Spider {
       ...{
         tValue: null,
         tParse: v => new Date(v),
+        transform: v => v,
         size: [360, 360],
         maxLabelLength: 10,
         coloring: null
@@ -106,7 +107,7 @@ export class Spider {
       const row = rows[0]
       const points = []
       for (const [i, field] of this.nFields.entries()) {
-        const l = this.scales[i](row[field])
+        const l = this.scales[i](this.transform(row[field], row))
         const direction = this.directions[i]
         points.push(direction.map(v => v*l))
       }
