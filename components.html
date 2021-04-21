@@ -1,0 +1,22 @@
+<body>
+  <!-- <quant-dash>
+  </quant-dash> -->
+  <!-- <quant-map geoData="/data/geo_state.json" data="/data/test_data.json" 
+    vField="all_cause" width="640" projection="AlbersUsa" 
+    tField="week_ending_date" sField="jurisdiction_of_occurrence"
+    geoKeyProperty="NAME" ></quant-map> -->
+
+  <quant-dash data="/data/test_data2.json" v1Field="all_cause" tField="week_ending_date" 
+    sField="jurisdiction_of_occurrence" sFields="jurisdiction_of_occurrence" visibleSValues="Arizona">
+
+    <quant-time-series tTickFormat="return d.toISOString().substring(0, 10)" 
+      layerDuration="365d" layerFrom="start" drawPoints="true"/>
+    <!-- <quant-map geoData="/data/geo_state.json" width="640" projection="AlbersUsa" 
+      geoKeyProperty="NAME" /> -->
+  </quant-dash>
+
+  <!-- <quant-time-series data="/data/test_data.json" />   -->
+
+  <script src="/js/components/Elements.js" type="module"></script>
+
+</body>

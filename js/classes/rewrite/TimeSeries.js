@@ -9,6 +9,7 @@ export class TimeSeries {
         hoverProximity: 20,
         maxLabelLength: 16,
         unit: null,
+        transform: null,
         tTickFormat: v => v,
         yTickFormat: v => v,
         tParse: v => new Date(v),
@@ -45,6 +46,7 @@ export class TimeSeries {
     this.margin =  {top: 0, right: 0, bottom: 0, left: 0} 
     this.coloringMap = new Map()
 
+
     this.nodes.base = d3.create("svg")
       .attr("id", `${this.id}-base`)
       .attr("width", this.size[0])
@@ -61,6 +63,8 @@ export class TimeSeries {
     this.setColoring(this.coloring == null ? this.#getDefaultColoring() : this.coloring)
     this.updateData()
     this.updateNowLine()
+    this.setTransform(this.transform)
+
   }
 
   updateData() {
@@ -81,6 +85,7 @@ export class TimeSeries {
 
     this.nodes.paths.selectAll("path").remove()
     for (const series of this.seriesData) {
+  
       this.nodes.paths.append("path")
         .attr("id", `${this.id}-path-${series[0]._s}`)
         .datum(series.filter(line.defined()))
@@ -352,6 +357,11 @@ export class TimeSeries {
 
   setAxisLabelsVisible(visible) {
     this.nodes.axisLabels.attr("visibility", visible ? "visible" : "hidden")
+  }
+
+  setTransform(transform) {
+    this.transform = transform 
+    this.setYField(this.yField.split("#")[0] + (transform != null ? "#" + transform.id : ""))
   }
 
 

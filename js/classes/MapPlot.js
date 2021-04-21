@@ -8,6 +8,7 @@ export class MapPlot {
         labelsVisible: true,
         size: [360, 220],
         coloring: null,
+        transform: null,
         yTransform: v => v,
         tParse: v => new Date(v),
       },
@@ -63,6 +64,8 @@ export class MapPlot {
     this.setColoring(this.coloring == null ? this.getScaleColoring() : this.coloring)
 
     this.createBase()
+
+    this.setTransform(this.transform)
 
     element.append(this.nodes.base.node())
   }
@@ -166,6 +169,11 @@ export class MapPlot {
     this.nowDataByS = d3.group(this.nowData, d => d._s)
     this.setColoring(this.getScaleColoring())
     this.updateInteraction()
+  }
+
+  setTransform(transform) {
+    this.transform = transform 
+    this.setYField(this.yField.split("#")[0] + (transform != null ? "#" + transform.id : ""))
   }
 
   setLabelsVisible(visible) {

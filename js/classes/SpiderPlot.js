@@ -9,7 +9,8 @@ export class Spider {
       ...{
         tValue: null,
         tParse: v => new Date(v),
-        transform: v => v,
+        transform : null,
+        vTransform: v => v,
         size: [360, 360],
         maxLabelLength: 10,
         coloring: null
@@ -25,7 +26,9 @@ export class Spider {
     this.state = state
     this.tField = tField
     this.sField = sField 
-    this.nFields = nFields 
+    // TODO: Make transform adjustable
+    this.nFields = nFields.map(field => field + (this.transform != null ? "#" + this.transform.id : "")) 
+    console.log(this.nFields)
     Object.assign(this, opts)
     
     this.id = this.element.id
@@ -107,7 +110,7 @@ export class Spider {
       const row = rows[0]
       const points = []
       for (const [i, field] of this.nFields.entries()) {
-        const l = this.scales[i](this.transform(row[field], row))
+        const l = this.scales[i](this.vTransform(row[field], row))
         const direction = this.directions[i]
         points.push(direction.map(v => v*l))
       }

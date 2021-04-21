@@ -11,16 +11,19 @@ export class DynamicState {
 
   /**
    * Define a new property. When this property is updated (through this class) then all of the 
-   * listeners will fire.
+   * listeners will fire. If the property already exists, then it will remain as is (i.e. the given
+   * value will be ignored). Defining a property will not trigger the listeners.
    * @param {string} property - The name of the property.
    * @param {*} value 
    */
   defineProperty(property, value) {
-    Object.defineProperty(this, property, {
-      set: function(value) { this._setProperty(property, value) },
-      get: function() { return this.properties[property] }
-    })
-    this._setProperty(property, value)
+    if (!this.hasOwnProperty(property)) {
+      Object.defineProperty(this, property, {
+        set: function(value) { this._setProperty(property, value) },
+        get: function() { return this.properties[property] }
+      })
+      this.properties[property] = value
+    }
   }
 
   /**

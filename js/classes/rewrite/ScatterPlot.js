@@ -69,6 +69,8 @@ export class Scatter {
     this.setColoring(this.coloring == null ? this.#getDefaultColoring() : this.coloring)
     this.updatePoints()
     this.updateTraces()
+    this.setTransform(this.transform)
+
   }
 
   createBase() {
@@ -440,6 +442,11 @@ export class Scatter {
 
   setAxisLabelsVisible(visible) {
     this.nodes.axisLabels.attr("visibility", visible ? "visible" : "hidden")
+  }
+
+  setTransform(transform) {
+    this.transform = transform 
+    this.setYField(this.yField.split("#")[0] + (transform != null ? "#" + transform.id : ""))
   }
 
 
