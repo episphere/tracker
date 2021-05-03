@@ -13,6 +13,7 @@ export class TimeSeries {
         tTickFormat: v => v,
         yTickFormat: v => v,
         tParse: v => new Date(v),
+        fieldMap: null,
         coloring: null,
         size: [720, 360], // TODO: Default to element size
       },
@@ -155,8 +156,9 @@ export class TimeSeries {
     this.nodes.yAxis.call(d3.axisLeft(this.scaleY)
       .tickFormat(this.yTickFormat)) 
 
-    const shortLabel = this.yField.length > this.maxLabelLength ?
-      this.yField.slice(0, this.maxLabelLength) + "..." : this.yField
+    const label = this.fieldMap != null ? this.fieldMap.get(this.yField) : this.yField
+    const shortLabel = label.length > this.maxLabelLength ?
+      label.slice(0, this.maxLabelLength) + "..." : label
     const lableWithUnit = this.unit ? shortLabel + ` (${this.unit})` : shortLabel
     this.nodes.yAxisLabel.text(lableWithUnit)
       .attr("x", this.margin.left + 5)
@@ -171,7 +173,7 @@ export class TimeSeries {
     this.scaleX = d3.scaleUtc()
       .domain(d3.extent(this.tValues))
       .range([ this.margin.left, this.size[0] -  this.margin.right])
-      //.nice()
+      .nice()
 
     this.nodes.xAxis.call(d3.axisBottom(this.scaleX)
       .tickSizeOuter(0)
@@ -224,6 +226,17 @@ export class TimeSeries {
     this.nodes.dot.append("text")
       .attr("y", -3)
       .attr("x", 3)
+
+    this.nodes.tooltip = d3.select(this.element).append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "rgba(255, 255, 255, .7)")
+      .style("border", "solid")
+      .style("border-width", "1px")
+      .style("border-radius", "2px")
+      .style("padding", "5px")
+      .style("position", "absolute")
+      .style("font-size", ".6em")
 
     this.nodes.labels = this.nodes.base.append("g")
       .attr("id", `${this.id}-labels`)
@@ -282,12 +295,20 @@ export class TimeSeries {
 
     if (Math.abs(p[1] - pointer[1]) < this.hoverProximity) {
       this.state.focus = s[i]._s
-      this.nodes.dot.select("text").text(s[i][this.sField]);
+      // this.nodes.dot.select("text").text(s[i][this.sField]);
       this.nodes.dot.attr("transform", `translate(${p[0]},${p[1]})`)
       this.nodes.dot.attr("visibility", "visible")
+
+      this.nodes.tooltip.style("opacity", 1)
+      this.nodes.tooltip.html(s[i][this.sField] + ": " + s[i][this.yField])
+      this.nodes.tooltip.style("left", `${p[0] + 10}px`)
+      this.nodes.tooltip.style("top", `${p[1] - 10}px`)
+      //this.nodes.tooltip.style("border-color", this.coloring.f(s[i]))
+      this.nodes.tooltip.style("border-color", "grey") 
     } else {
       this.state.focus = null
       this.nodes.dot.attr("visibility", "hidden")
+      this.nodes.tooltip.style("opacity", 0)
     }
   }
 
@@ -309,6 +330,7 @@ export class TimeSeries {
     this.state.focus = null
     this.updateInteraction()
     this.nodes.dot.attr("visibility", "hidden")
+    this.nodes.tooltip.style("opacity", 0)
   }
 
 
@@ -416,7 +438,7 @@ export class TimeSeries {
       .tickSizeOuter(0)
       .tickFormat(this.yTickFormat))
 
-    return this.nodes.yAxis.node().getBBox().width
+    return this.nodes.yAxis.node().getBBox().width + 5
   }
 
   #calculateBottomMargin() {

@@ -70,7 +70,10 @@ class DashElement extends QuantElement {
     // TODO: Mutation observer to prevent re-running on original children when a new child is added
     shadowRoot.firstElementChild.addEventListener("slotchange", e => {
       for (const childElement of e.target.assignedElements()) {
-        childElement.activate(this)
+        console.log(childElement.activate)
+        if (childElement.activate) { // TODO: Better way to check if it's a quant
+          childElement.activate(this)
+        }
       }
     })
   }

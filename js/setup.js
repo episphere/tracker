@@ -10,7 +10,7 @@ async function setUp(dataset) {
   window.defaults.COLORING = "Unique"
   window.defaults.Y_FIELD_MAP = createYFieldMap()
   window.defaults.X_FIELD = "influenza_and_pneumonia_j09_j18"
-  window.defaults.Y_FIELD = "alzheimer_disease_g30"
+  window.defaults.Y_FIELD = "covid_19_u071_underlying_cause_of_death"
   window.defaults.TRACES_ENABLED = true
   window.defaults.INTERACTIVE_COLOR = interactiveColor
   window.defaults.INTERACTIVE_LINE_COLOR = interactiveLineColor

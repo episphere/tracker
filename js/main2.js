@@ -7,8 +7,8 @@ import { MapPlot } from "./classes/MapPlot.js"
 
 // TODO: This whole approach is deprecated, get rid of it as soon as rewrite complete
 
-//const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
-const URL = "./data/test_data.json"
+const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
+//const URL = "./data/test_data.json"
 
 const populationDataPromise = d3.json("./data/population_2019.json")
 const geoDataPromise = d3.json("./data/us_geo.json")
@@ -49,9 +49,12 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   ([...numericFields.values()]).forEach(field => fieldConfig[field] = "number")
 
   var data = Format.format(rawData, fieldConfig)
-  data = data.filter(d => d.jurisdiction_of_occurrence != "United States" && d.jurisdiction_of_occurrence != "New York City")
+  //data = data.filter(d => d.jurisdiction_of_occurrence != "United States" && d.jurisdiction_of_occurrence != "New York City")
+  data = data.filter(d => d.jurisdiction_of_occurrence == "Arizona")
+  console.log(data)
   data.forEach(row => {
-    row.pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
+    //row.pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
+
     // for (const field of numericFields.values()) {
     //   row[field] = row[field] * (100000 / row.pop)
     // }
@@ -77,12 +80,12 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   const state = new DynamicState()
   state.defineProperty("selected", new Set())
   state.defineProperty("focus", null)
-  state.defineProperty("yField", "alzheimer_disease_g30")
+  state.defineProperty("yField", "covid_19_u071_underlying_cause_of_death")
 
   const coloring = getDefaultColoring(data, "jurisdiction_of_occurrence")
   window.map = new MapPlot(
     document.getElementById("map"),
-    geoData, data, state, "week_ending_date", "alzheimer_disease_g30", "jurisdiction_of_occurrence", 
+    geoData, data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence", 
     { transform: transforms.get("per100k")}
     //{yTransform: (v, row) => 100000 * v/row.pop}
     //{coloring: coloring}
@@ -91,7 +94,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
 
   window.timeSeries = new TimeSeries(
     document.getElementById("time-series"), 
-    data, state, "week_ending_date", "alzheimer_disease_g30", "jurisdiction_of_occurrence",
+    data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence",
     {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true, 
     unit: "deaths per 100k",  transform: transforms.get("per100k")}
   )
@@ -99,7 +102,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
 
   window.scatter = new Scatter(
     document.getElementById("scatter"), 
-    data, state, "week_ending_date", "all_cause", "alzheimer_disease_g30", 
+    data, state, "week_ending_date", "all_cause", "covid_19_u071_underlying_cause_of_death", 
     "jurisdiction_of_occurrence", {
       size: [300, 300], unit: "deaths per 100k", transform: transforms.get("per100k")
     }
@@ -118,7 +121,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
       scatter.setXField(this.value)
     }
   )
-  const ySelect = createSelect("Y", numericFields, ([...numericFields.values()])[1],
+  const ySelect = createSelect("Y", numericFields, 'covid_19_u071_underlying_cause_of_death',
     function() {
       timeSeries.setYField(this.value)
       scatter.setYField(this.value)
