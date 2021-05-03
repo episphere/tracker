@@ -4,8 +4,8 @@ import { Format } from "./classes/Format.js"
 import { MapPlot } from "./classes/MapPlot.js"
 
 
-//const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
-const URL = "/data/test_data2.json"
+const URL = "https://data.cdc.gov/resource/muzy-jte6.json?$limit=10000&$where=mmwryear='2021' or mmwryear='2020'"
+//const URL = "../data/test_data2.json"
 
 const populationDataPromise = d3.json("/data/population_2019.json")
 const geoDataPromise = d3.json("/data/us_geo.json")
