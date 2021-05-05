@@ -73,28 +73,11 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
     applyTransform(transforms.get("per100k"), data, numericField[0])
     applyTransform(transforms.get("raw"), data, numericField[0])
   }
-  console.log(data)
 
   const state = new DynamicState()
   state.defineProperty("selected", new Set())
   state.defineProperty("focus", null)
   state.defineProperty("yField", "covid_19_u071_underlying_cause_of_death")
-
-  const coloring = getDefaultColoring(data, "jurisdiction_of_occurrence")
-  window.map = new MapPlot(
-    document.getElementById("map"),
-    geoData, data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence", 
-    { transform: transforms.get("per100k")}
-  )
-  state.addListener((p, v) => map.stateChange(p, v))
-
-  window.timeSeries = new TimeSeries(
-    document.getElementById("time-series"), 
-    data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence",
-    {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true, 
-      yTooltipFormat: v => v.toFixed(2),unit: "deaths per 100k",  transform: transforms.get("per100k")}
-  )
-  state.addListener((p, v) => timeSeries.stateChange(p, v))
 
   window.scatter = new Scatter(
     document.getElementById("scatter"), 
@@ -105,10 +88,27 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   )
   state.addListener((p, v) => scatter.stateChange(p, v))
 
+  const coloring = getDefaultColoring(data, "jurisdiction_of_occurrence")
+  window.map = new MapPlot(
+    document.getElementById("map"),
+    geoData, data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence", 
+    { transform: transforms.get("per100k"), tValue: scatter.tValue}
+  )
+  state.addListener((p, v) => map.stateChange(p, v))
+
+  window.timeSeries = new TimeSeries(
+    document.getElementById("time-series"), 
+    data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence",
+    {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true, 
+      yTooltipFormat: v => v.toFixed(2),unit: "deaths per 100k",  transform: transforms.get("per100k"),
+    tValue: scatter.tValue}
+  )
+  state.addListener((p, v) => timeSeries.stateChange(p, v))
+
   window.spider = new Spider(
     document.getElementById("spider"), 
     data, state, "week_ending_date", "jurisdiction_of_occurrence",
-    [...numericFields.values()], {size: [360, 300], transform: transforms.get("per100k")}
+    [...numericFields.values()], {size: [360, 300], transform: transforms.get("per100k"), tValue: scatter.tValue},
   )
   state.addListener((p, v) => spider.stateChange(p, v))
 

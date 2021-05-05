@@ -17,6 +17,7 @@ export class TimeSeries {
         tParse: v => new Date(v),
         fieldMap: null,
         coloring: null,
+        tValue: null,
         size: [720, 360], // TODO: Default to element size
       },
       ...opts,
@@ -42,7 +43,9 @@ export class TimeSeries {
 
     this.id = this.element.id
     this.tValues = [...d3.group(data, d => d._t).keys()]
-    this.tValue = this.tValues[0] // TODO: Configure
+    if (this.tValue == null) {
+      this.tValue = this.tValues[this.tValues.length-1]
+    }
     this.seriesData = [...d3.group(data, d => d[this.sField]).values()]
     
     this.nodes = {}

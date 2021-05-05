@@ -44,7 +44,7 @@ export class Scatter {
     this.id = this.element.id
     this.tValues = [...d3.group(data, d => d._t).keys()]
     if (this.tValue == null) {
-      this.tValue = this.tValues[0]
+      this.tValue = this.tValues[this.tValues.length-1]
     }
     this.updateNowData()
     this.selectedRows = this.nowData

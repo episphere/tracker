@@ -9,6 +9,7 @@ export class MapPlot {
         size: [360, 220],
         coloring: null,
         transform: null,
+        tValue: null,
         yTransform: v => v,
         tParse: v => new Date(v),
       },
@@ -39,10 +40,6 @@ export class MapPlot {
     })
 
     this.id = element.id
-    this.tValues = [...d3.group(data, d => d._t).keys()]
-    if (this.tValue == null) {
-      this.tValue = this.tValues[0]
-    }
     this.tValues = [...d3.group(data, d => d._t).keys()]
     if (this.tValue == null) {
       this.tValue = this.tValues[0]
