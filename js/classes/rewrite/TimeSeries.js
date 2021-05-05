@@ -1,5 +1,6 @@
 
 // NOTE: Doesn't support lines with points at different times 
+// TODO: Fix bug where tooltip requires element to have position: relative
 export class TimeSeries {
   constructor(element, data, state, tField, yField, sField, opts = {}) {
 
@@ -12,6 +13,7 @@ export class TimeSeries {
         transform: null,
         tTickFormat: v => v,
         yTickFormat: v => v,
+        yTooltipFormat: v => v,
         tParse: v => new Date(v),
         fieldMap: null,
         coloring: null,
@@ -300,7 +302,7 @@ export class TimeSeries {
       this.nodes.dot.attr("visibility", "visible")
 
       this.nodes.tooltip.style("opacity", 1)
-      this.nodes.tooltip.html(s[i][this.sField] + ": " + s[i][this.yField])
+      this.nodes.tooltip.html(s[i][this.sField] + ": " + this.yTooltipFormat(s[i][this.yField]))
       this.nodes.tooltip.style("left", `${p[0] + 10}px`)
       this.nodes.tooltip.style("top", `${p[1] - 10}px`)
       //this.nodes.tooltip.style("border-color", this.coloring.f(s[i]))

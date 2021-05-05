@@ -49,11 +49,9 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   ([...numericFields.values()]).forEach(field => fieldConfig[field] = "number")
 
   var data = Format.format(rawData, fieldConfig)
-  //data = data.filter(d => d.jurisdiction_of_occurrence != "United States" && d.jurisdiction_of_occurrence != "New York City")
-  data = data.filter(d => d.jurisdiction_of_occurrence == "Arizona")
-  console.log(data)
+  data = data.filter(d => d.jurisdiction_of_occurrence != "United States" && d.jurisdiction_of_occurrence != "New York City")
   data.forEach(row => {
-    //row.pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
+    row.pop = populationMap.get(row["jurisdiction_of_occurrence"])[0].POP
 
     // for (const field of numericFields.values()) {
     //   row[field] = row[field] * (100000 / row.pop)
@@ -87,8 +85,6 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
     document.getElementById("map"),
     geoData, data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence", 
     { transform: transforms.get("per100k")}
-    //{yTransform: (v, row) => 100000 * v/row.pop}
-    //{coloring: coloring}
   )
   state.addListener((p, v) => map.stateChange(p, v))
 
@@ -96,7 +92,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
     document.getElementById("time-series"), 
     data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence",
     {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: true, 
-    unit: "deaths per 100k",  transform: transforms.get("per100k")}
+      yTooltipFormat: v => v.toFixed(2),unit: "deaths per 100k",  transform: transforms.get("per100k")}
   )
   state.addListener((p, v) => timeSeries.stateChange(p, v))
 
@@ -158,10 +154,10 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   const controlsTop = document.getElementById("controls-top")
   controlsTop.appendChild(xSelect)
   controlsTop.appendChild(ySelect)
-  controlsTop.appendChild(xTransformSelect)
-  controlsTop.appendChild(yTransformSelect)
+  // controlsTop.appendChild(xTransformSelect)
+  // controlsTop.appendChild(yTransformSelect)
   // controlsTop.appendChild(labelCheck)
-  // controlsTop.appendChild(axisLabels)
+  controlsTop.appendChild(axisLabels)
 
   const tSlider = createSlider(`date-slider`, "Date:", scatter.tValues, scatter.tValue,
     function(v) {
