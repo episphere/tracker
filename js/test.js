@@ -46,7 +46,7 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   window.timeSeries = new TimeSeries(
     document.getElementById("time-series"), 
     data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence",
-    {size: [720, 260], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: false, 
+    {size: [920, 360], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: false, 
     fieldMap: numericFields}
   )
   state.addListener((p, v) => timeSeries.stateChange(p, v))
