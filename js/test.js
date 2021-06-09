@@ -17,7 +17,8 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   const rawData = datas[2]
 
   const numericFields = new Map([
-    ["covid_19_u071_underlying_cause_of_death", "COVID-19 Deaths"],
+    //["covid_19_u071_underlying_cause_of_death", "COVID-19 Deaths"],
+    ["all_cause", "All Cause"]
   ])
   const fieldConfig = {};
   ([...numericFields.keys()]).forEach(field => fieldConfig[field] = "number")
@@ -39,13 +40,13 @@ Promise.all([populationDataPromise, geoDataPromise, mainDataPromise]).then(datas
   const state = new DynamicState()
   state.defineProperty("selected", new Set())
   state.defineProperty("focus", null)
-  state.defineProperty("yField", "covid_19_u071_underlying_cause_of_death")
+  state.defineProperty("yField", "all_cause")
 
   const coloring = getDefaultColoring(data, "jurisdiction_of_occurrence")
 
   window.timeSeries = new TimeSeries(
     document.getElementById("time-series"), 
-    data, state, "week_ending_date", "covid_19_u071_underlying_cause_of_death", "jurisdiction_of_occurrence",
+    data, state, "week_ending_date", "all_cause", "jurisdiction_of_occurrence",
     {size: [920, 360], tTickFormat: v => v.toISOString().slice(0, 10), drawNowLine: false, 
     fieldMap: numericFields}
   )
